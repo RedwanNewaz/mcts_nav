@@ -1,7 +1,7 @@
 #include "utility/ParamManager.h"
 #include "env/CircularStaticObstacles.h"
 #include "algo/MCTSPolicy.h"
-
+#include <queue>
 
 
 
@@ -32,6 +32,10 @@ int main(int argc, char* argv[]) {
 
     mcts::MCTSPolicy policy(env1, u_range, u_res, train_epoch);
     policy.run();
+
+    auto strategy = policy.getPolicy();
+
+    std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::less<mcts::Node>> queues;
 
     return 0;
 }

@@ -35,6 +35,24 @@ namespace mcts {
             if (visits == 0) return std::numeric_limits<double>::infinity();
             return (value / visits) + c * std::sqrt(std::log(parent->visits) / visits);
         }
+        [[nodiscard]] std::size_t hash() const {
+            std::size_t seed = state->hash();
+            std::size_t a = action->hash();
+            seed ^= std::hash<std::size_t>{}(a) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+            return seed;
+        }
+        std::size_t operator()(const Node& obj) const {
+            return obj.hash();
+        }
+
+        bool operator < (const Node& rhs) const {
+            return getUCT(0) < rhs.getUCT(0);
+        }
+
+        bool operator > (const Node& rhs) const {
+            return getUCT(0) > rhs.getUCT(0);
+        }
     };
     using NodePtr = std::shared_ptr<Node>;
     class MCTSPolicy : public base::train{
@@ -43,6 +61,8 @@ namespace mcts {
                    const std::vector<double>& u_res, int numEpochs, const std::string &outfile="");
 
         NodePtr search(int max_iterations = 30);
+
+        NodePtr getPolicy() const;
 
     private:
         EnvPtr env_;
@@ -74,5 +94,13 @@ namespace mcts {
 
 
 } // mcts
+namespace std {
+    template<>
+    struct hash<mcts::Node> {
+        std::size_t operator()(const mcts::Node& obj) const {
+            return obj.hash();
+        }
+    };
+}
 
 #endif //MCTS_MCTSPOLICY_H

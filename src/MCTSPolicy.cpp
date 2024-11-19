@@ -248,4 +248,8 @@ namespace mcts {
         }
         return bestNode;
     }
+
+    NodePtr MCTSPolicy::getPolicy() const {
+        return root_;
+    }
 } // mcts
