@@ -234,6 +234,7 @@ namespace mcts {
             children[i] = child;
             parallel[i] = std::async(std::launch::async, &MCTSPolicy::simulate, this,
                                      std::ref(child->state), std::ref(maxSimSteps_));
+
         }
 
         NodePtr bestNode = nullptr;
