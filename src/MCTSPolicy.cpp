@@ -23,10 +23,10 @@ namespace mcts {
     NodePtr MCTSPolicy::select(NodePtr node) {
         auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
         while (!node->children.empty()) {
-            if (node->children.size() < 100) {
+            if (node->children.size() < action->allPossibleActionSize()) {
                 return expand(node);
             }
-            node = bestChild(node, 1.41);
+            node = bestChild(node, 1.0);
         }
         return node;
     }
@@ -266,6 +266,6 @@ namespace mcts {
                 backpropagate(child, reward);
             }
         }
-        return bestChild(root_, 0.0);
+        return bestChild(root_, 0);
     }
 } // mcts
