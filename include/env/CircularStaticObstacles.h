@@ -93,6 +93,7 @@ namespace env{
         const double goalRadius_;
         const double robotRadius_;
         const double dt_;
+
         StatePtr goalState_;
         StatePtr startState_;
         StatePtr currentState_;

@@ -15,9 +15,7 @@ set(SRC_FILES
         include/algo/MCTSPolicy.h
         include/env/CircularStaticObstacles.h
         include/base/env.h
-        include/base/MCTS.h
-
-)
+ )
 
 add_executable(mcts main.cpp ${SRC_FILES})
 target_link_libraries(mcts

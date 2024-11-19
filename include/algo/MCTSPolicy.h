@@ -10,6 +10,7 @@
 #include "base/train.h"
 #include "base/env.h"
 #include <random>
+#include <future>
 #include <unordered_set>
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
@@ -50,6 +51,8 @@ namespace mcts {
         std::mt19937 gen;
         std::vector<double> u_range_;
         std::vector<double> u_res_;
+        const int maxIterations_ = 50;
+        const int maxSimSteps_ = 50;
 
     protected:
         double step() override;

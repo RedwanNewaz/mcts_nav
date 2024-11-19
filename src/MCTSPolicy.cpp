@@ -195,8 +195,7 @@ namespace mcts {
         double episodeReward = 0.0;
         while(true)
         {
-            auto node = search(50);
-            env_->getReward(node->state);
+            auto node = search(maxIterations_);
             root_ = node;
             if(env_->isCollision(root_->state)) {
                 backpropagate(root_, -1.0);
@@ -236,15 +235,24 @@ namespace mcts {
 
     NodePtr MCTSPolicy::search(int max_iterations) {
 
-        NodePtr bestNode = nullptr;
-        double bestval = -std::numeric_limits<double>::infinity();
+        std::vector<NodePtr>children(max_iterations);
+        std::vector<std::future<double>> parallel(max_iterations);
+
         for (int i = 0; i < max_iterations; ++i) {
             auto node = select(root_);
             auto child = expand(node);
-            auto reward = simulate(child->state);
+            children[i] = child;
+            parallel[i] = std::async(std::launch::async, &MCTSPolicy::simulate, this,
+                                     std::ref(child->state), std::ref(max_iterations));
+        }
+
+        NodePtr bestNode = nullptr;
+        double bestval = -std::numeric_limits<double>::infinity();
+        for (int i = 0; i < max_iterations; ++i) {
+            auto reward = parallel[i].get();
             if(reward > bestval) {
                 bestval = reward;
-                bestNode = child;
+                bestNode = children[i];
             }
         }
         return bestNode;
