@@ -6,12 +6,15 @@
 #include "model/UnicycleAction.h"
 #include "model/DiffWheelRobotState.h"
 
+#define UNTRYVER1
+
+
 namespace mcts {
-    MCTSPolicy::MCTSPolicy(const StatePtr& initX, const EnvPtr &env, int numEpochs, const std::string &outfile)
-    : train(numEpochs, outfile),
+    MCTSPolicy::MCTSPolicy(const StatePtr& initX, const EnvPtr &env, const std::vector<double>& u_range,
+                           const std::vector<double>& u_res, int numEpochs, const std::string &outfile)
+    : train(numEpochs, outfile), u_range_(u_range), u_res_(u_res),
     env_(env), gen(rd())  {
-        std::vector<double> u_range{0, 1, -0.5, 0.5};
-        std::vector<double> u_res{0.1, 0.1};
+
         auto A0(std::make_shared<model::UnicycleAction>(u_range, u_res));
         root_ = std::make_shared<Node>(initX, A0);
     }
@@ -34,7 +37,7 @@ namespace mcts {
         node->children.emplace_back(child);
         return child;
     }
-#ifndef VERSION1
+#ifndef UNTRYVER1
     ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
 
         std::vector<std::pair<double, double>> tried_actions;
@@ -43,8 +46,8 @@ namespace mcts {
             tried_actions.emplace_back(act[0], act[1]);
         }
 
-        std::uniform_real_distribution<> v_dist(0, 1);
-        std::uniform_real_distribution<> w_dist(-0.5, 0.5);
+        std::uniform_real_distribution<> v_dist(u_range_[0], u_range_[1]);
+        std::uniform_real_distribution<> w_dist(u_range_[2], u_range_[3]);
 
         double v, w;
         do {
@@ -53,9 +56,8 @@ namespace mcts {
         } while (std::find(tried_actions.begin(), tried_actions.end(),
                            std::make_pair(v, w)) != tried_actions.end());
 
-        std::vector<double> u_range{0, 1, -0.5, 0.5};
-        std::vector<double> u_res{0.1, 0.1};
-        auto selectedAction =std::make_shared<model::UnicycleAction>(u_range, u_res, v, w);
+
+        auto selectedAction =std::make_shared<model::UnicycleAction>(u_range_, u_res_, v, w);
 
         return selectedAction;
 
@@ -104,7 +106,7 @@ namespace mcts {
 
     }
 
-#ifndef VERSION1
+#ifndef SIMVER1
     double MCTSPolicy::simulate(const StatePtr &state) {
         //TODO make it as a parameter
         int maxSimSteps = 50;
@@ -113,13 +115,11 @@ namespace mcts {
 
         while (env_->isTerminal(newstate) || maxSimSteps > 0)
         {
-            std::uniform_real_distribution<> v_dist(0, 1);
-            std::uniform_real_distribution<> w_dist(-0.5, 0.5);
+            std::uniform_real_distribution<> v_dist(u_range_[0], u_range_[1]);
+            std::uniform_real_distribution<> w_dist(u_range_[2], u_range_[3]);
             double v = v_dist(gen);
             double w = w_dist(gen);
-            std::vector<double> u_range{0, 1, -0.5, 0.5};
-            std::vector<double> u_res{0.1, 0.1};
-            auto selectedAction =std::make_shared<model::UnicycleAction>(u_range, u_res, v, w);
+            auto selectedAction =std::make_shared<model::UnicycleAction>(u_range_, u_res_, v, w);
             newstate = executeAction(newstate, selectedAction);
             --maxSimSteps;
         }
@@ -196,6 +196,6 @@ namespace mcts {
                 backpropagate(child, reward);
             }
         }
-        return bestChild(root_, 1.0);
+        return bestChild(root_, 0.0);
     }
 } // mcts

@@ -23,10 +23,12 @@ int main(int argc, char* argv[]) {
     x[1] = start[1];
     x[2] = start[2];
 
+    std::vector<double> u_range{0, 1, -0.5, 0.5};
+    std::vector<double> u_res{0.1, 0.1};
 
     auto initX(std::make_shared<model::DiffWheelRobotState>(x, reso));
 
-    mcts::MCTSPolicy policy(initX, env1, train_epoch);
+    mcts::MCTSPolicy policy(initX, env1, u_range, u_res, train_epoch);
     policy.run();
 
     return 0;

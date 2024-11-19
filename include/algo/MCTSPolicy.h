@@ -37,7 +37,8 @@ namespace mcts {
     using NodePtr = std::shared_ptr<Node>;
     class MCTSPolicy : public base::train{
     public:
-        MCTSPolicy(const StatePtr& initX, const EnvPtr &env, int numEpochs, const std::string &outfile="");
+        MCTSPolicy(const StatePtr& initX, const EnvPtr &env, const std::vector<double>& u_range,
+                   const std::vector<double>& u_res, int numEpochs, const std::string &outfile="");
 
         NodePtr search();
 
@@ -46,6 +47,9 @@ namespace mcts {
         NodePtr root_;
         std::random_device rd;
         std::mt19937 gen;
+        std::vector<double> u_range_;
+        std::vector<double> u_res_;
+
     protected:
         double step() override;
 
