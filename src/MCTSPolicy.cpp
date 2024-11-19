@@ -193,7 +193,8 @@ namespace mcts {
     double MCTSPolicy::step() {
         do {
             root_ = search(maxIterations_);
-        }while(!env_->isTerminal(root_->state));
+            root_->isTerminal = env_->isTerminal(root_->state);
+        }while(!root_->isTerminal);
 
         double episodeReward = env_->getTerminalReward(root_->state);
         backpropagate(root_, episodeReward);
