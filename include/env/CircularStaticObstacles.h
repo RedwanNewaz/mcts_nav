@@ -14,8 +14,9 @@ namespace env{
     };
     class StaticObstaclesEnv: public base::environment{
     public:
-        StaticObstaclesEnv(const std::vector<float>& goal, const std::vector<std::vector<float>>& obstacles, double robotRadius, double goalRadius)
-        :robotRadius_(robotRadius), goalRadius_(goalRadius)
+        StaticObstaclesEnv(const std::vector<float>& start, const std::vector<float>& goal, const std::vector<std::vector<float>>& obstacles,
+                           double robotRadius, double goalRadius, double dt)
+        :robotRadius_(robotRadius), goalRadius_(goalRadius), dt_(dt)
         {
             for(auto& o:obstacles)
             {
@@ -27,6 +28,12 @@ namespace env{
             state[0] = goal[0];
             state[1] = goal[1];
             goalState_ = std::make_shared<model::DiffWheelRobotState>(state, res);
+
+            state[0] = start[0];
+            state[1] = start[1];
+            state[2] = start[2];
+            startState_ = std::make_shared<model::DiffWheelRobotState>(state, res);
+            currentState_ = std::make_shared<model::DiffWheelRobotState>(state, res);
         }
         double getReward(const StatePtr& state) const override
         {
@@ -59,15 +66,36 @@ namespace env{
             return goalDist < goalRadius_;
         }
 
-        double goalDistance(const StatePtr& state) const
-        {
-            return state->distance(*goalState_);
+        StatePtr reset() override {
+            return startState_;
         }
 
+        void setState(const StatePtr& state)
+        {
+            currentState_ = state;
+        }
+
+        StatePtr step(const ActionPtr &act) override {
+
+            auto s = currentState_->getArray();
+            auto u = act->getArray();
+            double theta = s[2] + u[1] * dt_;
+            double x = s[0] + u[0] * cos(theta) * dt_;
+            double y = s[1] + u[0] * sin(theta) * dt_;
+            std::vector<double> state{x, y, theta, u[0], u[1]};
+            currentState_ = std::make_shared<model::DiffWheelRobotState>(state, currentState_->getResolution());
+
+            return currentState_;
+        }
+
+
     private:
-        double goalRadius_;
-        double robotRadius_;
+        const double goalRadius_;
+        const double robotRadius_;
+        const double dt_;
         StatePtr goalState_;
+        StatePtr startState_;
+        StatePtr currentState_;
         std::vector<CircularObstacle> obstacles_;
     };
 }

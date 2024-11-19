@@ -6,13 +6,15 @@
 #define MCTS_ENV_H
 #include <memory>
 #include "base/state.h"
+#include "base/action.h"
 namespace base{
     class environment{
     public:
         virtual double getReward(const StatePtr& state) const = 0;
         virtual bool isCollision(const StatePtr& state) const = 0;
         virtual bool isTerminal(const StatePtr& state) const = 0;
-        virtual double goalDistance(const StatePtr& state) const = 0;
+        virtual StatePtr step(const ActionPtr& act) = 0;
+        virtual StatePtr reset() = 0;
     };
 }
 using EnvPtr = std::shared_ptr<base::environment>;

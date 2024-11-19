@@ -11,11 +11,11 @@
 
 
 namespace mcts {
-    MCTSPolicy::MCTSPolicy(const StatePtr& initX, const EnvPtr &env, const std::vector<double>& u_range,
+    MCTSPolicy::MCTSPolicy(const EnvPtr &env, const std::vector<double>& u_range,
                            const std::vector<double>& u_res, int numEpochs, const std::string &outfile)
     : train(numEpochs, outfile), u_range_(u_range), u_res_(u_res),
     env_(env), gen(rd())  {
-
+        auto initX = env->reset();
         auto A0(std::make_shared<model::UnicycleAction>(u_range, u_res));
         root_ = std::make_shared<Node>(initX, A0);
     }
@@ -26,7 +26,7 @@ namespace mcts {
             if (node->children.size() < action->allPossibleActionSize()) {
                 return expand(node);
             }
-            node = bestChild(node, 1.0);
+            node = bestChild(node, 3.0);
         }
         return node;
     }
@@ -176,13 +176,8 @@ namespace mcts {
 
     }
 
-#ifndef SIMVER1
-    double MCTSPolicy::simulate(const StatePtr &state) {
-        //TODO make it as a parameter
-        int maxSimSteps = 50;
+    double MCTSPolicy::simulate(const StatePtr &state, int maxSimSteps) {
         auto newstate = state;
-
-
         while (env_->isTerminal(newstate) || maxSimSteps > 0)
         {
             std::uniform_real_distribution<> v_dist(u_range_[0], u_range_[1]);
@@ -195,40 +190,25 @@ namespace mcts {
         }
         return env_->getReward(newstate);
     }
-#else
-    double MCTSPolicy::simulate(const StatePtr &state) {
-        //TODO make it as a parameter
-        int maxSimSteps = 50;
-        auto newstate = state;
-        auto action = std::dynamic_pointer_cast<model::UnicycleAction>(root_->action);
-        auto allActions = action->getAllPossibleActions();
-
-        while (env_->isTerminal(newstate) || maxSimSteps > 0)
-        {
-            auto act = action->sampleRandomActions(allActions, 1)[0];
-            auto actPtr = std::make_shared<model::UnicycleAction>(act);
-            newstate = executeAction(newstate, actPtr);
-            --maxSimSteps;
-        }
-
-        return env_->getReward(newstate);
-    }
-#endif
 
     double MCTSPolicy::step() {
         double episodeReward = 0.0;
-        while(!env_->isTerminal(root_->state))
+        while(true)
         {
-            auto node = search();
-            episodeReward += env_->getReward(node->state);
-//            DEBUG( "Distance: " << env_->goalDistance(node->state) <<" | " << episodeReward);
+            auto node = search(50);
+            env_->getReward(node->state);
             root_ = node;
+            if(env_->isCollision(root_->state)) {
+                backpropagate(root_, -1.0);
+                episodeReward -= 1;
+                break;
+            }
+            else if(env_->isTerminal(root_->state)) {
+                backpropagate(root_, 1.0);
+                episodeReward += 1;
+                break;
+            }
         }
-
-        // reset root
-        while(root_->parent)
-            root_ = root_->parent;
-
         return episodeReward;
     }
 
@@ -254,18 +234,19 @@ namespace mcts {
         return node;
     }
 
-    NodePtr MCTSPolicy::search() {
-        int max_iterations = 30;
+    NodePtr MCTSPolicy::search(int max_iterations) {
+
+        NodePtr bestNode = nullptr;
+        double bestval = -std::numeric_limits<double>::infinity();
         for (int i = 0; i < max_iterations; ++i) {
             auto node = select(root_);
-            if(!env_->isTerminal(node->state) || !env_->isCollision(node->state))
-            {
-                auto child = expand(node);
-                auto reward = simulate(child->state);
-//                printf("reward =  %lf\n", reward);
-                backpropagate(child, reward);
+            auto child = expand(node);
+            auto reward = simulate(child->state);
+            if(reward > bestval) {
+                bestval = reward;
+                bestNode = child;
             }
         }
-        return bestChild(root_, 0);
+        return bestNode;
     }
 } // mcts

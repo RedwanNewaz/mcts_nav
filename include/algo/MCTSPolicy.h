@@ -38,10 +38,10 @@ namespace mcts {
     using NodePtr = std::shared_ptr<Node>;
     class MCTSPolicy : public base::train{
     public:
-        MCTSPolicy(const StatePtr& initX, const EnvPtr &env, const std::vector<double>& u_range,
+        MCTSPolicy(const EnvPtr &env, const std::vector<double>& u_range,
                    const std::vector<double>& u_res, int numEpochs, const std::string &outfile="");
 
-        NodePtr search();
+        NodePtr search(int max_iterations = 30);
 
     private:
         EnvPtr env_;
@@ -60,7 +60,7 @@ namespace mcts {
         NodePtr select(NodePtr node);
         NodePtr expand(NodePtr node);
         NodePtr bestChild(NodePtr node, double explorationWeight);
-        double simulate(const StatePtr& state);
+        double simulate(const StatePtr& state, int maxSimSteps = 50);
         void backpropagate(NodePtr node, double reward);
         StatePtr executeAction(const StatePtr& state, const ActionPtr& action);
         ActionPtr getUntriedAction(NodePtr node);
