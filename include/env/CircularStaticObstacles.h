@@ -46,6 +46,12 @@ namespace env{
             return -goalDist;
         }
 
+        double getTerminalReward(const StatePtr &state) override {
+            double goalDist = state->distance(*goalState_);
+
+            return (goalDist < goalRadius_) ? 1.0 : -1.0;
+        }
+
         bool isCollision(const StatePtr& state) const override
         {
             auto x = state->getArray();
@@ -63,7 +69,7 @@ namespace env{
         bool isTerminal(const StatePtr& state) const override
         {
             double goalDist = state->distance(*goalState_);
-            return goalDist < goalRadius_;
+            return (goalDist < goalRadius_) || isCollision(state);
         }
 
         StatePtr reset() override {
@@ -75,17 +81,15 @@ namespace env{
             currentState_ = state;
         }
 
-        StatePtr step(const ActionPtr &act) override {
+        StatePtr step(const StatePtr &state, const ActionPtr &action) override {
 
-            auto s = currentState_->getArray();
-            auto u = act->getArray();
+            auto s = state->getArray();
+            auto u = action->getArray();
             double theta = s[2] + u[1] * dt_;
             double x = s[0] + u[0] * cos(theta) * dt_;
             double y = s[1] + u[0] * sin(theta) * dt_;
-            std::vector<double> state{x, y, theta, u[0], u[1]};
-            currentState_ = std::make_shared<model::DiffWheelRobotState>(state, currentState_->getResolution());
-
-            return currentState_;
+            std::vector<double> X{x, y, theta, u[0], u[1]};
+            return std::make_shared<model::DiffWheelRobotState>(X, state->getResolution());
         }
 
 

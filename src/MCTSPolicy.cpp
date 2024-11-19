@@ -26,27 +26,33 @@ namespace mcts {
             if (node->children.size() < action->allPossibleActionSize()) {
                 return expand(node);
             }
-            node = bestChild(node, 3.0);
+            node = bestChild(node, explorationWeight);
         }
         return node;
     }
 
     NodePtr MCTSPolicy::expand(NodePtr node) {
-        auto actionPtr = getUntriedAction(node);
-        auto newStatePtr = executeAction(node->state, actionPtr);
-        auto child = std::make_shared<Node>(newStatePtr, actionPtr, node);
+
         // check if this child already exist
-        bool childExist = false;
-        for(auto& ch: node->children)
-        {
-            if (*ch->state == *child->state && *ch->action == *child->action)
+        bool isValidChild;
+        NodePtr child;
+        do{
+            isValidChild = true;
+            auto actionPtr = getUntriedAction(node);
+            auto newStatePtr = executeAction(node->state, actionPtr);
+            child = std::make_shared<Node>(newStatePtr, actionPtr, node);
+            for(auto& ch: node->children)
             {
-                childExist = true;
-                break;
+                if (*ch->state == *child->state && *ch->action == *child->action)
+                {
+                    isValidChild = false;
+                    break;
+                }
             }
-        }
-        if(!childExist)
-            node->children.emplace_back(child);
+
+        }while(!isValidChild);
+
+        node->children.emplace_back(child);
         return child;
     }
 #ifndef UNTRYVER1
@@ -156,14 +162,7 @@ namespace mcts {
 #endif
 
     StatePtr MCTSPolicy::executeAction(const StatePtr &state, const ActionPtr &action) {
-        double dt_ = 0.1;
-        auto s = state->getArray();
-        auto u = action->getArray();
-        double theta = s[2] + u[1] * dt_;
-        double x = s[0] + u[0] * cos(theta) * dt_;
-        double y = s[1] + u[0] * sin(theta) * dt_;
-        std::vector<double>NewState{x, y, theta, u[0], u[1]};
-        return std::make_shared<model::DiffWheelRobotState>(NewState, state->getResolution());
+        return env_->step(state, action);
     }
 
     void MCTSPolicy::backpropagate(NodePtr node, double reward) {
@@ -192,22 +191,12 @@ namespace mcts {
     }
 
     double MCTSPolicy::step() {
-        double episodeReward = 0.0;
-        while(true)
-        {
-            auto node = search(maxIterations_);
-            root_ = node;
-            if(env_->isCollision(root_->state)) {
-                backpropagate(root_, -1.0);
-                episodeReward -= 1;
-                break;
-            }
-            else if(env_->isTerminal(root_->state)) {
-                backpropagate(root_, 1.0);
-                episodeReward += 1;
-                break;
-            }
-        }
+        do {
+            root_ = search(maxIterations_);
+        }while(!env_->isTerminal(root_->state));
+
+        double episodeReward = env_->getTerminalReward(root_->state);
+        backpropagate(root_, episodeReward);
         return episodeReward;
     }
 
@@ -243,7 +232,7 @@ namespace mcts {
             auto child = expand(node);
             children[i] = child;
             parallel[i] = std::async(std::launch::async, &MCTSPolicy::simulate, this,
-                                     std::ref(child->state), std::ref(max_iterations));
+                                     std::ref(child->state), std::ref(maxSimSteps_));
         }
 
         NodePtr bestNode = nullptr;

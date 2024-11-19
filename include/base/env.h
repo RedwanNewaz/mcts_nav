@@ -13,8 +13,12 @@ namespace base{
         virtual double getReward(const StatePtr& state) const = 0;
         virtual bool isCollision(const StatePtr& state) const = 0;
         virtual bool isTerminal(const StatePtr& state) const = 0;
-        virtual StatePtr step(const ActionPtr& act) = 0;
+        virtual StatePtr step(const StatePtr &state, const ActionPtr &action) = 0;
         virtual StatePtr reset() = 0;
+        virtual double getTerminalReward(const StatePtr &state)
+        {
+            return 0;
+        }
     };
 }
 using EnvPtr = std::shared_ptr<base::environment>;
