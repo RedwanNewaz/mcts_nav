@@ -7,12 +7,9 @@
 #include "model/DiffWheelRobotState.h"
 
 namespace mcts {
-    MCTSPolicy::MCTSPolicy(int numEpochs, const std::string &outfile, const EnvPtr &env) : train(numEpochs, outfile),
-    env_(env) {
-        double robotRadius = 0.25;
-        std::vector<double> reso(5, robotRadius);
-        std::vector<double> state(5, 0.0);
-        auto initX(std::make_shared<model::DiffWheelRobotState>(state, reso));
+    MCTSPolicy::MCTSPolicy(const StatePtr& initX, const EnvPtr &env, int numEpochs, const std::string &outfile)
+    : train(numEpochs, outfile),
+    env_(env), gen(rd())  {
         std::vector<double> u_range{0, 1, -0.5, 0.5};
         std::vector<double> u_res{0.1, 0.1};
         auto A0(std::make_shared<model::UnicycleAction>(u_range, u_res));
@@ -22,10 +19,10 @@ namespace mcts {
     NodePtr MCTSPolicy::select(NodePtr node) {
         auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
         while (!node->children.empty()) {
-            if (node->children.size() < action->allPossibleActionSize()) {
+            if (node->children.size() < 100) {
                 return expand(node);
             }
-            node = bestChild(node, 0.0);
+            node = bestChild(node, 1.41);
         }
         return node;
     }
@@ -37,7 +34,33 @@ namespace mcts {
         node->children.emplace_back(child);
         return child;
     }
+#ifndef VERSION1
+    ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
 
+        std::vector<std::pair<double, double>> tried_actions;
+        for (const auto& child : node->children) {
+            auto act = child->action->getArray();
+            tried_actions.emplace_back(act[0], act[1]);
+        }
+
+        std::uniform_real_distribution<> v_dist(0, 1);
+        std::uniform_real_distribution<> w_dist(-0.5, 0.5);
+
+        double v, w;
+        do {
+            v = v_dist(gen);
+            w = w_dist(gen);
+        } while (std::find(tried_actions.begin(), tried_actions.end(),
+                           std::make_pair(v, w)) != tried_actions.end());
+
+        std::vector<double> u_range{0, 1, -0.5, 0.5};
+        std::vector<double> u_res{0.1, 0.1};
+        auto selectedAction =std::make_shared<model::UnicycleAction>(u_range, u_res, v, w);
+
+        return selectedAction;
+
+    }
+#else
     ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
         auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
         auto allActions = action->getAllPossibleActions();
@@ -58,6 +81,7 @@ namespace mcts {
         }
         return action->sampleRandomActions(untriedActions, 1)[0];
     }
+#endif
 
     StatePtr MCTSPolicy::executeAction(const StatePtr &state, const ActionPtr &action) {
         double dt_ = 0.1;
@@ -65,7 +89,7 @@ namespace mcts {
         auto u = action->getArray();
         double theta = s[2] + u[1] * dt_;
         double x = s[0] + u[0] * cos(theta) * dt_;
-        double y = s[1] + u[1] * sin(theta) * dt_;
+        double y = s[1] + u[0] * sin(theta) * dt_;
         std::vector<double>NewState{x, y, theta, u[0], u[1]};
         return std::make_shared<model::DiffWheelRobotState>(NewState, state->getResolution());
     }
@@ -80,6 +104,28 @@ namespace mcts {
 
     }
 
+#ifndef VERSION1
+    double MCTSPolicy::simulate(const StatePtr &state) {
+        //TODO make it as a parameter
+        int maxSimSteps = 50;
+        auto newstate = state;
+
+
+        while (env_->isTerminal(newstate) || maxSimSteps > 0)
+        {
+            std::uniform_real_distribution<> v_dist(0, 1);
+            std::uniform_real_distribution<> w_dist(-0.5, 0.5);
+            double v = v_dist(gen);
+            double w = w_dist(gen);
+            std::vector<double> u_range{0, 1, -0.5, 0.5};
+            std::vector<double> u_res{0.1, 0.1};
+            auto selectedAction =std::make_shared<model::UnicycleAction>(u_range, u_res, v, w);
+            newstate = executeAction(newstate, selectedAction);
+            --maxSimSteps;
+        }
+        return env_->getReward(newstate);
+    }
+#else
     double MCTSPolicy::simulate(const StatePtr &state) {
         //TODO make it as a parameter
         int maxSimSteps = 50;
@@ -97,6 +143,7 @@ namespace mcts {
 
         return env_->getReward(newstate);
     }
+#endif
 
     double MCTSPolicy::step() {
         double episodeReward = 0.0;
@@ -104,9 +151,13 @@ namespace mcts {
         {
             auto node = search();
             episodeReward += env_->getReward(node->state);
-            DEBUG( "Distance: " << env_->goalDistance(node->state) <<" | " << *node->state);
+//            DEBUG( "Distance: " << env_->goalDistance(node->state) <<" | " << episodeReward);
             root_ = node;
         }
+
+        // reset root
+        while(root_->parent)
+            root_ = root_->parent;
 
         return episodeReward;
     }

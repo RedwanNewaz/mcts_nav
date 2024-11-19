@@ -17,11 +17,11 @@ namespace base{
         }
         void run()
         {
-            double avg_reward = 0;
+            double total_reward = 0;
             for (int epoch = 1; epoch <= num_epochs_; ++epoch) {
-                double episode_reward = step();
-                avg_reward += step() / epoch;
-                printf("[>] epoch = %d,  avg reward = %lf \n", epoch, avg_reward);
+                double step_reward = step();
+                total_reward += step_reward ;
+                printf("[>] epoch = %d, step reward = %lf,  avg reward = %lf \n", epoch, step_reward, total_reward / epoch);
             }
 
             if(!output_file_.empty())

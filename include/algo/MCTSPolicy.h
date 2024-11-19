@@ -9,7 +9,7 @@
 #include "base/action.h"
 #include "base/train.h"
 #include "base/env.h"
-
+#include <random>
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
 namespace mcts {
@@ -37,13 +37,15 @@ namespace mcts {
     using NodePtr = std::shared_ptr<Node>;
     class MCTSPolicy : public base::train{
     public:
-        MCTSPolicy(int numEpochs, const std::string &outfile, const EnvPtr &env);
+        MCTSPolicy(const StatePtr& initX, const EnvPtr &env, int numEpochs, const std::string &outfile="");
 
         NodePtr search();
 
     private:
         EnvPtr env_;
         NodePtr root_;
+        std::random_device rd;
+        std::mt19937 gen;
     protected:
         double step() override;
 
