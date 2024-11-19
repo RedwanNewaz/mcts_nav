@@ -1,8 +1,7 @@
 max_speed: 1.0
 min_speed: 0.0
-max_yawrate: 0.6981
-max_accel: 0.2
-max_dyawrate: 2.0472
+max_yawrate: 0.5 #0.6981
+
 
 dt: 0.1
 predict_time: 3.0 #1.85
@@ -10,13 +9,10 @@ predict_time: 3.0 #1.85
 goal_radius: 0.3
 robot_radius: 0.25
 obstacle_length: 0.25
-v_reso: 0.01
-yawrate_reso: 0.001745329
+v_reso: 0.1 # 0.01
+yawrate_reso: 0.1 #0.001745329
 pref_speed_index: 5
 
-to_goal_cost_gain: 0.15
-to_obstacle_cost_gain: 1.0
-speed_cost_gain: 1.0
 
 name: "env1"
 start: [0.0, 0.0, 1.5707]
@@ -29,4 +25,4 @@ obstacles: [
  [ 3.,  7., 0.25]
 ]
 
-train_epoch: 10
+train_epoch: 20

@@ -14,6 +14,7 @@ namespace model{
 class UnicycleAction: public base::Action
 {
 public:
+    UnicycleAction() = default;
     /**
      * Unicycle motion model
      * @param range  vector of (v_res, w_res)
@@ -26,6 +27,10 @@ public:
     {
         act_[0] = v;
         act_[1] = w;
+    }
+    virtual ~UnicycleAction()
+    {
+
     }
     std::vector<UnicycleAction> getAllPossibleActions() const
     {
@@ -40,8 +45,8 @@ public:
     }
     std::size_t allPossibleActionSize() const
     {
-        int v_size = static_cast<int>((range_[1] - range_[0]) / res_[0]) + 1;
-        int w_size = static_cast<int>((range_[3] - range_[2]) / res_[1]) + 1;
+        int v_size = static_cast<int>((range_[1] - range_[0]) / res_[0]);
+        int w_size = static_cast<int>((range_[3] - range_[2]) / res_[1]);
         return v_size * w_size;
     }
 
@@ -58,7 +63,7 @@ private:
 
 protected:
     std::vector<double> createRangeVector(double min_value, double max_value, double resolution) const {
-        int size = static_cast<int>((max_value - min_value) / resolution) + 1;
+        int size = static_cast<int>((max_value - min_value) / resolution) ;
         std::vector<double> range_vec(size);
 
         std::iota(range_vec.begin(), range_vec.end(), 0);

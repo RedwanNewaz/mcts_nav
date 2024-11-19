@@ -52,6 +52,11 @@ namespace base{
             return seed;
         }
 
+        bool operator == (const State& other) const
+        {
+            return hash() == other.hash();
+        }
+
         double distance(const State& other) const
         {
             auto dx = state_[0] - other.state_[0];

@@ -7,6 +7,7 @@
 #include "model/DiffWheelRobotState.h"
 
 #define UNTRYVER1
+//#define ALL_POSSIBLE
 
 
 namespace mcts {
@@ -34,7 +35,18 @@ namespace mcts {
         auto actionPtr = getUntriedAction(node);
         auto newStatePtr = executeAction(node->state, actionPtr);
         auto child = std::make_shared<Node>(newStatePtr, actionPtr, node);
-        node->children.emplace_back(child);
+        // check if this child already exist
+        bool childExist = false;
+        for(auto& ch: node->children)
+        {
+            if (*ch->state == *child->state && *ch->action == *child->action)
+            {
+                childExist = true;
+                break;
+            }
+        }
+        if(!childExist)
+            node->children.emplace_back(child);
         return child;
     }
 #ifndef UNTRYVER1
@@ -48,7 +60,7 @@ namespace mcts {
 
         std::uniform_real_distribution<> v_dist(u_range_[0], u_range_[1]);
         std::uniform_real_distribution<> w_dist(u_range_[2], u_range_[3]);
-
+//        printf("node size %zu \n", node->children.size());
         double v, w;
         do {
             v = v_dist(gen);
@@ -62,7 +74,7 @@ namespace mcts {
         return selectedAction;
 
     }
-#else
+#elifdef EXHAUST
     ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
         auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
         auto allActions = action->getAllPossibleActions();
@@ -82,6 +94,64 @@ namespace mcts {
             untriedActions.emplace_back(std::make_shared<model::UnicycleAction>(pact));
         }
         return action->sampleRandomActions(untriedActions, 1)[0];
+    }
+#elifdef ALL_POSSIBLE
+    ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
+
+        // keep track of visited action set
+        std::unordered_set<base::Action> triedActions;
+        for(auto& child: node->children) {
+            base::Action ca = *child->action;
+            triedActions.insert(ca);
+        }
+
+        // create list of all possible actions
+        auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
+        std::shared_ptr<model::UnicycleAction> selectedAction;
+        auto ACTIONS = action->getAllPossibleActions();
+        std::uniform_int_distribution<> a_dist(0, ACTIONS.size() - 1);
+
+
+        // sample an action that never visited before
+        for(int i = 0; i < action->allPossibleActionSize(); ++i) {
+            auto u = ACTIONS[a_dist(gen)].getArray();
+            selectedAction =std::make_shared<model::UnicycleAction>(u_range_, u_res_, u[0], u[1]);
+
+            // found new action?
+            if(triedActions.count(*selectedAction) == 0)
+                break;
+        };
+
+        return selectedAction;
+    }
+#else
+    ActionPtr MCTSPolicy::getUntriedAction(NodePtr node) {
+
+        // keep track of visited action set
+        std::unordered_set<base::Action> triedActions;
+        for(auto& child: node->children) {
+            base::Action ca = *child->action;
+            triedActions.insert(ca);
+        }
+
+        // create list of all possible actions
+        std::shared_ptr<model::UnicycleAction> selectedAction;
+        std::uniform_real_distribution<> v_dist(u_range_[0], u_range_[1]);
+        std::uniform_real_distribution<> w_dist(u_range_[2], u_range_[3]);
+        std::array<double, 2> u;
+        auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
+
+        // sample an action that never visited before
+        for(int i = 0; i < action->allPossibleActionSize(); ++i) {
+            u[0] = v_dist(gen);
+            u[1] = w_dist(gen);
+            selectedAction =std::make_shared<model::UnicycleAction>(u_range_, u_res_, u[0], u[1]);
+            // found new action?
+            if(triedActions.count(*selectedAction) == 0)
+                break;
+        };
+
+        return selectedAction;
     }
 #endif
 

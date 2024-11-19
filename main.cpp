@@ -14,6 +14,14 @@ int main(int argc, char* argv[]) {
     auto goal = pm.get_param<std::vector<float>>("goal");
     auto robotRadius = pm.get_param<double>("robot_radius");
     auto goal_radius = pm.get_param<double>("goal_radius");
+
+    auto max_speed = pm.get_param<double>("max_speed");
+    auto min_speed = pm.get_param<double>("min_speed");
+    auto max_yawrate = pm.get_param<double>("max_yawrate");
+
+    auto v_reso = pm.get_param<double>("v_reso");
+    auto yawrate_reso = pm.get_param<double>("yawrate_reso");
+
     auto train_epoch = pm.get_param<int>("train_epoch");
     auto env1(std::make_shared<env::StaticObstaclesEnv>(goal, obstacles, robotRadius, goal_radius));
 
@@ -23,8 +31,8 @@ int main(int argc, char* argv[]) {
     x[1] = start[1];
     x[2] = start[2];
 
-    std::vector<double> u_range{0, 1, -0.5, 0.5};
-    std::vector<double> u_res{0.1, 0.1};
+    std::vector<double> u_range{min_speed, max_speed, -max_yawrate, max_yawrate};
+    std::vector<double> u_res{v_reso, yawrate_reso};
 
     auto initX(std::make_shared<model::DiffWheelRobotState>(x, reso));
 

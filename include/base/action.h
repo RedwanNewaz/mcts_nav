@@ -17,7 +17,10 @@ class Action{
             size_ = resolution.size();
             act_.resize(size_);
         }
-        virtual ~Action() = default;
+
+
+
+    virtual ~Action() = default;
         std::size_t operator()(const Action& obj) const {
             return obj.hash();
         }
@@ -33,17 +36,17 @@ class Action{
             return act_;
         }
 
-        bool operator != (const Action& other)
+        bool operator != (const Action& other) const
         {
             return hash() != other.hash();
         }
 
-        bool operator == (const Action& other)
+        bool operator == (const Action& other) const
         {
             return hash() == other.hash();
         }
 
-        std::size_t hash() const {
+        [[nodiscard]] std::size_t hash() const {
             std::size_t seed = 0;
             int i = 0;
             for (auto u : act_) {
@@ -69,6 +72,8 @@ namespace std {
         }
     };
 }
+
+
 
 using ActionPtr = std::shared_ptr<base::Action>;
 #endif //MCTS_ACTION_H

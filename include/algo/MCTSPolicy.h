@@ -10,6 +10,7 @@
 #include "base/train.h"
 #include "base/env.h"
 #include <random>
+#include <unordered_set>
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
 namespace mcts {

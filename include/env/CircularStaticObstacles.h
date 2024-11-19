@@ -35,7 +35,8 @@ namespace env{
             if(isCollision(state))
                 return -1.0e3;
             double goalDist = state->distance(*goalState_);
-            return 1.0e3 * exp(-goalDist);
+//            return 1.0e3 * exp(-goalDist);
+            return -goalDist;
         }
 
         bool isCollision(const StatePtr& state) const override
