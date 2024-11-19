@@ -216,9 +216,9 @@ int main() {
     std::vector<std::pair<double, double>> obstacles = {
             {5, 5}, {7, 3}, {3, 7}
     };
-    MCTS mcts(initial_state, goal_state, obstacles, 30);
-    for (int i = 0; i < 1000; ++i) {
 
+    for (int i = 0; i < 1000; ++i) {
+        MCTS mcts(initial_state, goal_state, obstacles, 30);
         State best_state = mcts.search();
 
         std::cout << "Best state: x=" << best_state.x << ", y=" << best_state.y

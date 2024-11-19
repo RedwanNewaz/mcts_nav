@@ -20,15 +20,13 @@ namespace mcts {
     }
 
     NodePtr MCTSPolicy::select(NodePtr node) {
-
         auto action = std::dynamic_pointer_cast<model::UnicycleAction>(node->action);
-        do
-        {
-            if(node->children.size() < action->allPossibleActionSize())
+        while (!node->children.empty()) {
+            if (node->children.size() < action->allPossibleActionSize()) {
                 return expand(node);
-            node = bestChild(node);
-        }while (!node->children.empty());
-
+            }
+            node = bestChild(node, 0.0);
+        }
         return node;
     }
 
@@ -53,7 +51,6 @@ namespace mcts {
                 if(pact == *child->action)
                 {
                     match = true;
-//                    DEBUG("match " << pact);
                     break;
                 }
             if(match) continue;
@@ -74,12 +71,13 @@ namespace mcts {
     }
 
     void MCTSPolicy::backpropagate(NodePtr node, double reward) {
-        while(node)
+        while(node != nullptr)
         {
             node->visits += 1;
             node->value += reward;
             node = node->parent;
         }
+
     }
 
     double MCTSPolicy::simulate(const StatePtr &state) {
@@ -104,9 +102,10 @@ namespace mcts {
         double episodeReward = 0.0;
         while(!env_->isTerminal(root_->state))
         {
-            root_ = search();
-            episodeReward += env_->getReward(root_->state);
-            std::cout << *root_->state << std::endl;
+            auto node = search();
+            episodeReward += env_->getReward(node->state);
+            DEBUG( "Distance: " << env_->goalDistance(node->state) <<" | " << *node->state);
+            root_ = node;
         }
 
         return episodeReward;
@@ -116,13 +115,14 @@ namespace mcts {
 
     }
 
-    NodePtr MCTSPolicy::bestChild(NodePtr node) {
-        while (!node->children.empty() && !node->isTerminal) {
+    NodePtr MCTSPolicy::bestChild(NodePtr node, double explorationWeight) {
+
+        while (!node->children.empty()) {
             double bestValue = -std::numeric_limits<double>::infinity();
             NodePtr bestChild = nullptr;
 
             for (const auto& child : node->children) {
-                double uctValue = child->getUCT();
+                double uctValue = child->getUCT(explorationWeight);
                 if (uctValue > bestValue) {
                     bestValue = uctValue;
                     bestChild = child;
@@ -137,13 +137,14 @@ namespace mcts {
         int max_iterations = 30;
         for (int i = 0; i < max_iterations; ++i) {
             auto node = select(root_);
-            if(env_->isTerminal(node->state) || env_->isCollision(node->state))
+            if(!env_->isTerminal(node->state) || !env_->isCollision(node->state))
             {
                 auto child = expand(node);
                 auto reward = simulate(child->state);
+//                printf("reward =  %lf\n", reward);
                 backpropagate(child, reward);
             }
         }
-        return bestChild(root_);
+        return bestChild(root_, 1.0);
     }
 } // mcts

@@ -12,6 +12,7 @@ namespace base{
         virtual double getReward(const StatePtr& state) const = 0;
         virtual bool isCollision(const StatePtr& state) const = 0;
         virtual bool isTerminal(const StatePtr& state) const = 0;
+        virtual double goalDistance(const StatePtr& state) const = 0;
     };
 }
 using EnvPtr = std::shared_ptr<base::environment>;

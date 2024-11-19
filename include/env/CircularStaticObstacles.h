@@ -58,6 +58,11 @@ namespace env{
             return goalDist < goalRadius_;
         }
 
+        double goalDistance(const StatePtr& state) const
+        {
+            return state->distance(*goalState_);
+        }
+
     private:
         double goalRadius_;
         double robotRadius_;

@@ -52,7 +52,7 @@ namespace mcts {
     protected:
         NodePtr select(NodePtr node);
         NodePtr expand(NodePtr node);
-        NodePtr bestChild(NodePtr node);
+        NodePtr bestChild(NodePtr node, double explorationWeight);
         double simulate(const StatePtr& state);
         void backpropagate(NodePtr node, double reward);
         StatePtr executeAction(const StatePtr& state, const ActionPtr& action);
