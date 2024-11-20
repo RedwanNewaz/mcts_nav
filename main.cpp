@@ -47,7 +47,8 @@ int main(int argc, char* argv[]) {
 
        std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> bestChildren;
        for(auto& child:node.children)
-            bestChildren.push(*child);
+           if(child->value > 0)
+                bestChildren.push(*child);
        auto selectedChild = bestChildren.top();
        queue.push(selectedChild);
     }
