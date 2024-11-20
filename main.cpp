@@ -34,10 +34,16 @@ int main(int argc, char* argv[]) {
     policy.run();
 
     auto strategy = policy.getPolicy();
+    std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> queue;
+    queue.push(*strategy);
 
-   while (strategy) {
-       std::cout << *strategy->state << std::endl;
-       strategy = strategy->parent;
+   while (!queue.empty()) {
+       auto node = queue.top();
+       queue.pop();
+       std::cout << *node.state << std::endl;
+       for(auto& child:node.children)
+           if(!child->isTerminal)
+               queue.push(*child);
    }
 
     return 0;
