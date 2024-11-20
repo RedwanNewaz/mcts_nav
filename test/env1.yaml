@@ -25,4 +25,4 @@ obstacles: [
  [ 3.,  7., 0.25]
 ]
 
-train_epoch: 100
+train_epoch: 2

@@ -166,7 +166,7 @@ namespace mcts {
     }
 
     void MCTSPolicy::backpropagate(NodePtr node, double reward) {
-        while(node != nullptr)
+        while(node->parent)
         {
             node->visits += 1;
             node->value += reward;

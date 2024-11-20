@@ -35,7 +35,10 @@ int main(int argc, char* argv[]) {
 
     auto strategy = policy.getPolicy();
 
-    std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::less<mcts::Node>> queues;
+   while (strategy) {
+       std::cout << *strategy->state << std::endl;
+       strategy = strategy->parent;
+   }
 
     return 0;
 }
