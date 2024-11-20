@@ -34,17 +34,23 @@ int main(int argc, char* argv[]) {
     policy.run();
 
     auto strategy = policy.getPolicy();
-    std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> queue;
+    std::queue<mcts::Node> queue;
     queue.push(*strategy);
 
-   while (!queue.empty()) {
-       auto node = queue.top();
+    int depth = 0;
+    while (!queue.empty()) {
+       auto node = queue.front();
        queue.pop();
-       std::cout << *node.state << std::endl;
+       std::cout << "[Depth ] " << ++depth << " | " << *node.state << std::endl;
+       if(node.isTerminal)
+           break;
+
+       std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> bestChildren;
        for(auto& child:node.children)
-           if(!child->isTerminal)
-               queue.push(*child);
-   }
+            bestChildren.push(*child);
+       auto selectedChild = bestChildren.top();
+       queue.push(selectedChild);
+    }
 
     return 0;
 }
