@@ -10,6 +10,8 @@
 namespace base{
     class environment{
     public:
+        virtual ~environment() = default;
+
         virtual double getReward(const StatePtr& state) const = 0;
         virtual bool isCollision(const StatePtr& state) const = 0;
         virtual bool isTerminal(const StatePtr& state) const = 0;

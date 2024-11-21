@@ -7,19 +7,22 @@
 #include <memory>
 #include "base/env.h"
 #include "model/DiffWheelRobotState.h"
-#include "model/EnhancedCollisionChecker.h"
 
 namespace env{
-
+    struct CircularObstacle{
+        double x, y, radius;
+    };
     class StaticObstaclesEnv: public base::environment{
     public:
         StaticObstaclesEnv(const std::vector<float>& start, const std::vector<float>& goal, const std::vector<std::vector<float>>& obstacles,
                            double robotRadius, double goalRadius, double dt)
         :robotRadius_(robotRadius), goalRadius_(goalRadius), dt_(dt)
         {
-
-
-            collisionChecker_ = std::make_unique<env::EnhancedCollisionChecker>(obstacles, robotRadius);
+            for(auto& o:obstacles)
+            {
+                CircularObstacle c{o[0], o[1], o[2]};
+                obstacles_.emplace_back(c);
+            }
             std::vector<double> res(5, robotRadius_);
             std::vector<double> state(5, 0.0);
             state[0] = goal[0];
@@ -51,7 +54,16 @@ namespace env{
 
         bool isCollision(const StatePtr& state) const override
         {
-           return collisionChecker_->is_collision(state->getArray());
+            auto x = state->getArray();
+            for(auto& obstacle: obstacles_)
+            {
+                double dx = obstacle.x - x[0];
+                double dy = obstacle.y - x[1];
+                double obsDist = std::hypot(dx, dy);
+                if(obsDist <= (obstacle.radius + robotRadius_))
+                    return true;
+            }
+            return false;
         }
 
         bool isTerminal(const StatePtr& state) const override
@@ -89,8 +101,7 @@ namespace env{
         StatePtr goalState_;
         StatePtr startState_;
         StatePtr currentState_;
-        std::unique_ptr<env::EnhancedCollisionChecker> collisionChecker_;
-
+        std::vector<CircularObstacle> obstacles_;
     };
 }
 #endif //MCTS_CIRCULARSTATICOBSTACLES_H

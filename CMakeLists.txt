@@ -15,9 +15,15 @@ set(SRC_FILES
         include/algo/MCTSPolicy.h
         include/env/CircularStaticObstacles.h
         include/base/env.h
- )
+        include/base/collision_manager.h
+        include/model/PremitiveCollisionChecker.h
+        include/model/EnhancedCollisionChecker.h
+)
 
 add_executable(mcts main.cpp ${SRC_FILES})
 target_link_libraries(mcts
         yaml-cpp::yaml-cpp
 )
+
+
+add_subdirectory(unittest)
