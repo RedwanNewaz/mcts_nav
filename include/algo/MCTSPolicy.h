@@ -9,6 +9,7 @@
 #include "base/action.h"
 #include "base/train.h"
 #include "base/env.h"
+#include "env/DynamicObstacles.h"
 #include <random>
 #include <future>
 #include <unordered_set>

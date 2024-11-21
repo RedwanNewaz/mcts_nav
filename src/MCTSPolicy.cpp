@@ -191,12 +191,14 @@ namespace mcts {
     }
 
     double MCTSPolicy::step() {
+        auto denv = std::dynamic_pointer_cast<env::DynamicObstacles>(env_);
         do {
             root_ = search(maxIterations_);
-            root_->isTerminal = env_->isTerminal(root_->state);
+            root_->isTerminal = denv->isTerminal(root_->state);
+            denv->incrementTime();
         }while(!root_->isTerminal);
 
-        double episodeReward = env_->getTerminalReward(root_->state);
+        double episodeReward = denv->getTerminalReward(root_->state);
         backpropagate(root_, episodeReward);
         return episodeReward;
     }
