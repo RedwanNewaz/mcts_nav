@@ -20,6 +20,7 @@ namespace env{
 
 
             collisionChecker_ = std::make_unique<env::EnhancedCollisionChecker>(obstacles, robotRadius);
+            // state vec : x, y, theta, v, w
             std::vector<double> res(5, robotRadius_);
             std::vector<double> state(5, 0.0);
             state[0] = goal[0];

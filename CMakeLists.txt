@@ -3,7 +3,10 @@ project(mcts)
 
 set(CMAKE_CXX_STANDARD 17)
 find_package(YAML-CPP REQUIRED)
-include_directories(include)
+find_package(Eigen3 REQUIRED)
+include_directories(
+        /usr/include/eigen3
+        include)
 set(SRC_FILES
         include/base/train.h
         include/base/action.h
@@ -18,11 +21,14 @@ set(SRC_FILES
         include/base/collision_manager.h
         include/model/PremitiveCollisionChecker.h
         include/model/EnhancedCollisionChecker.h
+        src/ObstacleGenerator.cpp
+        include/env/DynamicObstacles.h
 )
 
 add_executable(mcts main.cpp ${SRC_FILES})
 target_link_libraries(mcts
         yaml-cpp::yaml-cpp
+        Eigen3::Eigen
 )
 
 
