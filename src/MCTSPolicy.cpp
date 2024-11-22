@@ -198,6 +198,12 @@ namespace mcts {
             root_ = search(maxIterations_);
             root_->isTerminal = denv->isTerminal(root_->state);
 
+            auto obs = denv->getDynObsList();
+            auto cc(std::make_shared<env::EnhancedCollisionChecker>(obs, denv->getRobotRadius()));
+            if(cc->is_collision(root_->state->getArray()))
+                root_->isTerminal = true;
+
+
         }while(!root_->isTerminal);
 
         double episodeReward = denv->getTerminalReward(root_->state);

@@ -72,6 +72,10 @@ namespace env{
             return collisionChecker_->is_collision(X);
         }
 
+        double getRobotRadius() const {
+            return robotRadius_;
+        }
+
         std::vector<std::vector<float>> getDynObsList()const
         {
             return dynObstacles_;

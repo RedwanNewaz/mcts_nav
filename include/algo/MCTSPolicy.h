@@ -48,11 +48,11 @@ namespace mcts {
         }
 
         bool operator < (const Node& rhs) const {
-            return getUCT() < rhs.getUCT();
+            return getUCT(0) < rhs.getUCT(0);
         }
 
         bool operator > (const Node& rhs) const {
-            return getUCT() > rhs.getUCT();
+            return getUCT(0) > rhs.getUCT(0);
         }
     };
     using NodePtr = std::shared_ptr<Node>;
