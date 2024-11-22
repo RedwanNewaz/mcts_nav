@@ -26,6 +26,7 @@ set(SRC_FILES
         include/model/EnhancedCollisionChecker.h
         src/ObstacleGenerator.cpp
         include/env/DynamicObstacles.h
+        include/utility/simulator.h
 )
 link_directories(/Users/redwan/miniconda3//envs/limbo/lib/)
 

@@ -1,49 +1,7 @@
 #include "utility/ParamManager.h"
-#include "env/CircularStaticObstacles.h"
 #include "env/DynamicObstacles.h"
 #include "algo/MCTSPolicy.h"
-#include <queue>
-
-#include "build/_deps/googletest-src/googletest/include/gtest/internal/gtest-port.h"
-#include "utility/matplotlibcpp.h"
-
-namespace plt = matplotlibcpp;
-typedef std::vector<std::vector<float>> OBS_TYPE;
-
-void animate(const StatePtr& state, const OBS_TYPE& obs, double robotRadius) {
-
-    plt::clf();
-    std::map<std::string, std::string> args;
-    // show dynamic obstacles
-    args["color"] = "black";
-    auto cc(std::make_shared<env::EnhancedCollisionChecker>(obs, robotRadius));
-    if(cc->is_collision(state->getArray())) {
-        std::cout << "[collision ] " <<" | " << *state  <<  std::endl;
-
-    }
-
-
-    std::vector<float>X(obs.size()), Y(obs.size());
-    int i = 0;
-    for(auto& ob : obs) {
-        X[i] = ob[0];
-        Y[i] = ob[1];
-        ++i;
-      //  printf("obs size =  %d %lf %lf \n", i, X[i], Y[i]);
-    }
-
-
-    plt::scatter(X, Y, 50, args);
-
-    auto robot = state->getArray();
-    args["color"] = "blue";
-    std::vector<double>rX{robot[0]}, rY{robot[1]};
-    plt::scatter(rX, rY, 50, args);
-
-    plt::xlim(-5, 20);
-    plt::ylim(-5, 20);
-    plt::pause(0.01);
-}
+#include "utility/simulator.h"
 
 int main(int argc, char* argv[]) {
 
@@ -75,32 +33,8 @@ int main(int argc, char* argv[]) {
     policy.run();
 
     auto strategy = policy.getPolicy();
-    std::queue<mcts::Node> queue;
-    queue.push(*strategy);
+    Simulator::executePolicy(strategy, env1, robotRadius);
 
-    int depth = 0;
-    env1->reset();
-    while (!queue.empty()) {
-       auto node = queue.front();
-       queue.pop();
-
-       auto obstacles = env1->getDynObsList();
-       animate(node.state, obstacles, robotRadius);
-
-       // std::cout << "[Depth ] " << ++depth << " | " << *node.state << " " << env1->isCollision(node.state) <<  std::endl;
-
-       if(node.isTerminal)
-           break;
-
-       std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> bestChildren;
-       for(auto& child:node.children)
-           // if(child->value >= 0.5)
-                bestChildren.push(*child);
-       auto selectedChild = bestChildren.top();
-       queue.push(selectedChild);
-
-       env1->incrementTime();
-    }
 
     return 0;
 }
