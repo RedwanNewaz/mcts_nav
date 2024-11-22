@@ -190,9 +190,11 @@ namespace mcts {
         return env_->getReward(newstate);
     }
 
-    double MCTSPolicy::step() {
+    double MCTSPolicy::step(int epoch) {
         auto denv = std::dynamic_pointer_cast<env::DynamicObstacles>(env_);
-	denv->reset();
+	    denv->reset();
+        double rate = static_cast<double>(1.0 / double(num_epochs_));
+        explorationWeight = 0.01 + 1.0 * exp(-rate * epoch);
         do {
             denv->incrementTime();
             root_ = search(maxIterations_);

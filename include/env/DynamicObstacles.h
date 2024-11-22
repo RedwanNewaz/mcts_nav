@@ -45,6 +45,12 @@ namespace env{
 
         }
 
+        bool isTerminal(const StatePtr &state) const override {
+//            if(time_ >= sim_time_)
+//                return true;
+            return StaticObstaclesEnv::isTerminal(state);
+        }
+
 
         double getRobotRadius() const {
             return robotRadius_;

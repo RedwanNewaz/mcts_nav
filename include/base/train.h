@@ -19,7 +19,7 @@ namespace base{
         {
             double total_reward = 0;
             for (int epoch = 1; epoch <= num_epochs_; ++epoch) {
-                double step_reward = step();
+                double step_reward = step(epoch);
                 total_reward += step_reward ;
                 printf("[>] epoch = %d, step reward = %lf,  avg reward = %lf \n", epoch, step_reward, total_reward / epoch);
             }
@@ -31,7 +31,7 @@ namespace base{
         int num_epochs_;
         std::string output_file_;
         virtual void save(const std::string& outfile) = 0;
-        virtual double step() = 0;
+        virtual double step(int epoch) = 0;
     };
 }
 #endif //MCTS_TRAIN_H

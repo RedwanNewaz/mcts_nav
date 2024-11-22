@@ -7,6 +7,8 @@ find_package(Eigen3 REQUIRED)
 include_directories(
         /usr/include/eigen3
         /opt/local/include/
+        /usr/include/python3.10
+        /usr/include/python3.10/numpy
         /Users/redwan/miniconda3//envs/limbo/include/python3.10
         /Users/redwan/miniconda3//envs/limbo/lib/python3.10/site-packages/numpy/core/include
         include)
@@ -28,7 +30,7 @@ set(SRC_FILES
         include/env/DynamicObstacles.h
         include/utility/simulator.h
 )
-link_directories(/Users/redwan/miniconda3//envs/limbo/lib/)
+link_directories(/Users/redwan/miniconda3/envs/limbo/lib/)
 
 add_executable(mcts main.cpp ${SRC_FILES})
 target_link_libraries(mcts
