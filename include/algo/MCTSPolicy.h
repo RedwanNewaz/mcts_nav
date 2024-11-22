@@ -74,7 +74,7 @@ namespace mcts {
         std::vector<double> u_res_;
         const int maxIterations_ = 50;
         const int maxSimSteps_ = 50;
-        const double explorationWeight = 3.0;
+        const double explorationWeight = 1.0;
 
     protected:
         double step() override;

@@ -8,6 +8,7 @@
 #include "base/env.h"
 #include "model/DiffWheelRobotState.h"
 #include "model/EnhancedCollisionChecker.h"
+#include "model/PremitiveCollisionChecker.h"
 #include "ObstacleGenerator.h"
 namespace env{
     class DynamicObstacles: public base::environment{
@@ -51,10 +52,11 @@ namespace env{
             time_ = fmod(time_, sim_time_);
 
             auto positions = obsGen_->getObstaclePositionsAtTime(time_);
+            // printf("obs size (%d, %d) \n", positions.rows(), positions.cols());
             // populate obstacle location
             for (int i = 0; i < positions.rows(); ++i) {
                 for (int j = 0; j < positions.cols(); ++j) {
-                    dynObstacles_[i][j] = positions(i, j);
+                    dynObstacles_[j][i] = positions(i, j);
                 }
                 dynObstacles_[i][2] = obsLen_;
             }

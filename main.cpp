@@ -4,10 +4,49 @@
 #include "algo/MCTSPolicy.h"
 #include <queue>
 
+#include "build/_deps/googletest-src/googletest/include/gtest/internal/gtest-port.h"
+#include "utility/matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
+typedef std::vector<std::vector<float>> OBS_TYPE;
+
+void animate(const StatePtr& state, const OBS_TYPE& obs, double robotRadius) {
+
+    plt::clf();
+    std::map<std::string, std::string> args;
+    // show dynamic obstacles
+    args["color"] = "black";
+    auto cc(std::make_shared<env::EnhancedCollisionChecker>(obs, robotRadius));
+    if(cc->is_collision(state->getArray())) {
+        std::cout << "[collision ] " <<" | " << *state  <<  std::endl;
+
+    }
 
 
+    std::vector<float>X(obs.size()), Y(obs.size());
+    int i = 0;
+    for(auto& ob : obs) {
+        X[i] = ob[0];
+        Y[i] = ob[1];
+        ++i;
+      //  printf("obs size =  %d %lf %lf \n", i, X[i], Y[i]);
+    }
+
+
+    plt::scatter(X, Y, 50, args);
+
+    auto robot = state->getArray();
+    args["color"] = "blue";
+    std::vector<double>rX{robot[0]}, rY{robot[1]};
+    plt::scatter(rX, rY, 50, args);
+
+    plt::xlim(-5, 20);
+    plt::ylim(-5, 20);
+    plt::pause(0.01);
+}
 
 int main(int argc, char* argv[]) {
+
     auto pm(std::make_shared<param_manager>(argv[1]));
     std::vector<std::vector<float>> obstacles;
     pm->get_obstacles(obstacles);
@@ -45,15 +84,19 @@ int main(int argc, char* argv[]) {
        auto node = queue.front();
        queue.pop();
 
-       std::cout << "[Depth ] " << ++depth << " | " << *node.state << " " << env1->isCollision(node.state) <<  std::endl;
+       auto obstacles = env1->getDynObsList();
+       animate(node.state, obstacles, robotRadius);
+
+       // std::cout << "[Depth ] " << ++depth << " | " << *node.state << " " << env1->isCollision(node.state) <<  std::endl;
 
        if(node.isTerminal)
            break;
 
        std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> bestChildren;
        for(auto& child:node.children)
-           if(child->value > 0)
-                bestChildren.push(*child);
+           bestChildren.push(*child);
+           // if(child->value > 0)
+           //      bestChildren.push(*child);
        auto selectedChild = bestChildren.top();
        queue.push(selectedChild);
 

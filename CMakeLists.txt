@@ -6,6 +6,9 @@ find_package(YAML-CPP REQUIRED)
 find_package(Eigen3 REQUIRED)
 include_directories(
         /usr/include/eigen3
+        /opt/local/include/
+        /Users/redwan/miniconda3//envs/limbo/include/python3.10
+        /Users/redwan/miniconda3//envs/limbo/lib/python3.10/site-packages/numpy/core/include
         include)
 set(SRC_FILES
         include/base/train.h
@@ -24,11 +27,13 @@ set(SRC_FILES
         src/ObstacleGenerator.cpp
         include/env/DynamicObstacles.h
 )
+link_directories(/Users/redwan/miniconda3//envs/limbo/lib/)
 
 add_executable(mcts main.cpp ${SRC_FILES})
 target_link_libraries(mcts
         yaml-cpp::yaml-cpp
         Eigen3::Eigen
+        -lpython3.10
 )
 
 
