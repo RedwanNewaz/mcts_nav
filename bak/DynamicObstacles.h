@@ -1,29 +1,28 @@
 //
-// Created by airlab on 11/18/24.
+// Created by airlab on 11/21/24.
 //
 
-#ifndef MCTS_CIRCULARSTATICOBSTACLES_H
-#define MCTS_CIRCULARSTATICOBSTACLES_H
+#ifndef MCTS_DYNAMICOBSTACLES_H
+#define MCTS_DYNAMICOBSTACLES_H
 #include <memory>
 #include "base/env.h"
 #include "model/DiffWheelRobotState.h"
 #include "model/EnhancedCollisionChecker.h"
-#include "utility/ParamManager.h"
-
+#include "model/PremitiveCollisionChecker.h"
+#include "ObstacleGenerator.h"
 namespace env{
-
-    class StaticObstaclesEnv: public base::environment{
+    class DynamicObstacles: public base::environment{
     public:
-        explicit StaticObstaclesEnv(const ParamPtr& pm)
+        DynamicObstacles(const ParamPtr& pm):pm_(pm)
         {
             auto start = pm->get_param<std::vector<float>>("start");
             auto goal = pm->get_param<std::vector<float>>("goal");
             robotRadius_ = pm->get_param<double>("robot_radius");
             goalRadius_ = pm->get_param<double>("goal_radius");
+            sim_time_ = pm->get_param<double>("sim_time");
+            obsLen_ = pm->get_param<double>("obstacle_length");
             dt_ = pm->get_param<double>("dt");
             pm->get_obstacles(obstacles_);
-
-            collisionChecker_ = std::make_unique<env::EnhancedCollisionChecker>(obstacles_, robotRadius_);
             // state vec : x, y, theta, v, w
             std::vector<double> res(5, robotRadius_);
             std::vector<double> state(5, 0.0);
@@ -36,7 +35,59 @@ namespace env{
             state[2] = start[2];
             startState_ = std::make_shared<model::DiffWheelRobotState>(state, res);
             currentState_ = std::make_shared<model::DiffWheelRobotState>(state, res);
+
+            // configure obs generator
+            int num_timesteps = static_cast<int>(sim_time_ / dt_);
+            obsGen_ = std::make_shared<ObstacleGenerator>(sim_time_, num_timesteps, pm);
+
+            // configure collision checker
+            dynObstacles_.resize(obstacles_.size(), std::vector<float>(3, 0));
+            time_ = -dt_;
+            incrementTime();
         }
+
+        void incrementTime()
+        {
+            time_ += dt_;
+            time_ = fmod(time_, sim_time_);
+
+            auto positions = obsGen_->getObstaclePositionsAtTime(time_);
+            // printf("obs size (%d, %d) \n", positions.rows(), positions.cols());
+            // populate obstacle location
+            for (int i = 0; i < positions.rows(); ++i) {
+                for (int j = 0; j < positions.cols(); ++j) {
+                    dynObstacles_[j][i] = positions(i, j);
+                }
+                dynObstacles_[i][2] = obsLen_;
+            }
+            collisionChecker_ = std::make_unique<env::EnhancedCollisionChecker>(dynObstacles_, robotRadius_);
+
+        }
+
+        bool isCollision(const StatePtr& state) const override
+        {
+            auto x = state->getArray();
+            // avoid time index 0
+            std::vector<double>X{x[1], x[2]};
+            return collisionChecker_->is_collision(X);
+        }
+
+        double getRobotRadius() const {
+            return robotRadius_;
+        }
+
+        std::vector<std::vector<float>> getDynObsList()const
+        {
+            return dynObstacles_;
+        }
+
+
+        StatePtr reset() override {
+            time_ = -dt_;
+            incrementTime();
+            return startState_;
+        }
+
         double getReward(const StatePtr& state) const override
         {
             if(isTerminal(state))
@@ -54,10 +105,6 @@ namespace env{
             return (goalDist < goalRadius_) ? 1.0 : -1.0;
         }
 
-        bool isCollision(const StatePtr& state) const override
-        {
-           return collisionChecker_->is_collision(state->getArray());
-        }
 
         bool isTerminal(const StatePtr& state) const override
         {
@@ -65,9 +112,6 @@ namespace env{
             return (goalDist < goalRadius_) || isCollision(state);
         }
 
-        StatePtr reset() override {
-            return startState_;
-        }
 
         void setState(const StatePtr& state)
         {
@@ -85,18 +129,22 @@ namespace env{
             return std::make_shared<model::DiffWheelRobotState>(X, state->getResolution());
         }
 
-
-    protected:
+    private:
         double goalRadius_;
         double robotRadius_;
+        double obsLen_;
         double dt_;
+        double time_;
+        double sim_time_;
+        ParamPtr pm_;
 
-        StatePtr goalState_;
         StatePtr startState_;
         StatePtr currentState_;
+        StatePtr goalState_;
+        ObsGenPtr obsGen_;
+        std::vector<std::vector<float>> dynObstacles_;
         std::vector<std::vector<float>> obstacles_;
         std::unique_ptr<env::EnhancedCollisionChecker> collisionChecker_;
-
     };
 }
-#endif //MCTS_CIRCULARSTATICOBSTACLES_H
+#endif //MCTS_DYNAMICOBSTACLES_H
