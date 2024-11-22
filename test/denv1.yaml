@@ -1,6 +1,6 @@
 max_speed: 2.0
 min_speed: 0.0
-max_yawrate: 1.5 #0.6981
+max_yawrate: 1.5 #1.5 #0.6981
 
 
 dt: 0.1
