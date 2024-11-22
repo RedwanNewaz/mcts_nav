@@ -194,9 +194,10 @@ namespace mcts {
         auto denv = std::dynamic_pointer_cast<env::DynamicObstacles>(env_);
 	denv->reset();
         do {
+            denv->incrementTime();
             root_ = search(maxIterations_);
             root_->isTerminal = denv->isTerminal(root_->state);
-            denv->incrementTime();
+
         }while(!root_->isTerminal);
 
         double episodeReward = denv->getTerminalReward(root_->state);
