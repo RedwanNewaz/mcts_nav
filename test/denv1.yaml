@@ -26,5 +26,5 @@ obstacles: [
   [ 7.5, 2.5, 2.0, 2.356]
 ]
 
-train_epoch: 300
+train_epoch: 150
 sim_time: 15.0 #1.85

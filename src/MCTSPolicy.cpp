@@ -166,14 +166,42 @@ namespace mcts {
     }
 
     void MCTSPolicy::backpropagate(NodePtr node, double reward) {
-        while(root_->parent)
-        {
-            root_->visits += 1;
-            root_->value += reward;
-            root_ = root_->parent;
-        }
+        while (node) {
+            node->visits += 1;
+            node->value += reward;
 
+            // Check if the node should be pruned after update
+            if (shouldPruneNode(node)) {
+                // If the node is pruned, remove it from its parent's children
+                if (node->parent) {
+                    auto& siblings = node->parent->children;
+                    siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
+                }
+            }
+
+            node = node->parent;
+        }
     }
+
+    // void MCTSPolicy::backpropagate(NodePtr node, double reward) {
+    //     while(root_->parent)
+    //     {
+    //         root_->visits += 1;
+    //         root_->value += reward;
+    //         // Check if the node should be pruned after update
+    //
+    //         if (shouldPruneNode(root_)) {
+    //
+    //             // If the node is pruned, remove it from its parent's children
+    //             if (root_->parent) {
+    //                 auto& siblings = root_->parent->children;
+    //                 siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
+    //             }
+    //         }
+    //         root_ = root_->parent;
+    //     }
+    //
+    // }
 
     double MCTSPolicy::simulate(const StatePtr &state, int maxSimSteps) {
         auto newstate = state;
@@ -257,5 +285,11 @@ namespace mcts {
 
     NodePtr MCTSPolicy::getPolicy() const {
         return root_;
+    }
+
+    bool MCTSPolicy::shouldPruneNode(const NodePtr& node) const {
+        // DEBUG(" node after visits = "<< node->visits << " values =  " <<  node->value);
+        return node->visits >= MIN_VISITS_BEFORE_PRUNING &&
+               node->value / node->visits < NEGATIVE_REWARD_THRESHOLD;
     }
 } // mcts

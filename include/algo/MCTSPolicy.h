@@ -16,6 +16,10 @@
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
 namespace mcts {
+    // Add these constants to the class definition
+    const double NEGATIVE_REWARD_THRESHOLD = -5;
+    const int MIN_VISITS_BEFORE_PRUNING = 5;
+
     struct Node{
           StatePtr state;
           ActionPtr action;
@@ -89,6 +93,7 @@ namespace mcts {
         void backpropagate(NodePtr node, double reward);
         StatePtr executeAction(const StatePtr& state, const ActionPtr& action);
         ActionPtr getUntriedAction(NodePtr node);
+        bool shouldPruneNode(const NodePtr& node) const;
 
 
     };

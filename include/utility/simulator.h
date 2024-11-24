@@ -4,7 +4,7 @@
 
 #ifndef SIMULATOR_H
 #define SIMULATOR_H
-#include <queue>
+#include <stack>
 #include "utility/matplotlibcpp.h"
 #include "env/DynamicObstacles.h"
 #include "algo/MCTSPolicy.h"
@@ -16,15 +16,19 @@ typedef std::shared_ptr<env::DynamicObstacles> DynEnvPtr;
 struct Simulator {
 
     template <typename T>
-    static void executePolicy(const T& strategy, const DynEnvPtr& env1, double robotRadius) {
-        std::queue<mcts::Node> queue;
-        queue.push(*strategy);
+    static void executePolicy(const T& policy, const DynEnvPtr& env1, double robotRadius) {
+        auto strategy = policy;
+        std::stack<mcts::Node> queue;
+        while(strategy->parent) {
+            queue.push(*strategy);
+            strategy = strategy->parent;
+        }
 
         env1->reset();
         std::vector<double>trajX, trajY;
         StatePtr terminateState;
         while (!queue.empty()) {
-            auto node = queue.front();
+            auto node = queue.top();
             queue.pop();
             env1->incrementTime();
             auto obstacles = env1->getDynObsList();
@@ -33,12 +37,6 @@ struct Simulator {
             // std::cout << "[Depth ] " << ++depth << " | " << *node.state << " " << env1->isCollision(node.state) <<  std::endl;
             if(node.isTerminal)
                 break;
-
-            std::priority_queue<mcts::Node, std::vector<mcts::Node>, std::greater<mcts::Node>> bestChildren;
-            for(auto& child:node.children)
-                    bestChildren.push(*child);
-            auto selectedChild = bestChildren.top();
-            queue.push(selectedChild);
 
         }
         printf("traj size %zu | terminate at ", trajY.size());
