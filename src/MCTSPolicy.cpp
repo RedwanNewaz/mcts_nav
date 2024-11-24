@@ -26,33 +26,46 @@ namespace mcts {
             if (node->children.size() < action->allPossibleActionSize()) {
                 return expand(node);
             }
+
+            // Prune children with negative rewards and sufficient visits
+            node->children.erase(
+                std::remove_if(node->children.begin(), node->children.end(),
+                    [this](const NodePtr& child) {
+                        return shouldPruneNode(child);
+                    }),
+                node->children.end()
+            );
+
+            // If all children are pruned, return the current node
+            if (node->children.empty()) {
+                return node;
+            }
+
             node = bestChild(node, explorationWeight);
         }
         return node;
     }
 
     NodePtr MCTSPolicy::expand(NodePtr node) {
-
-        // check if this child already exist
         bool isValidChild;
         NodePtr child;
-        do{
+        do {
             isValidChild = true;
             auto actionPtr = getUntriedAction(node);
             auto newStatePtr = executeAction(node->state, actionPtr);
             child = std::make_shared<Node>(newStatePtr, actionPtr, node);
-            for(auto& ch: node->children)
-            {
-                if (*ch->state == *child->state && *ch->action == *child->action)
-                {
+            for (auto& ch : node->children) {
+                if (*ch->state == *child->state && *ch->action == *child->action) {
                     isValidChild = false;
                     break;
                 }
             }
+        } while (!isValidChild);
 
-        }while(!isValidChild);
-
-        node->children.emplace_back(child);
+        // Only add the child if it shouldn't be pruned
+        if (!shouldPruneNode(child)) {
+            node->children.emplace_back(child);
+        }
         return child;
     }
 #ifndef UNTRYVER1
@@ -166,13 +179,31 @@ namespace mcts {
     }
 
     void MCTSPolicy::backpropagate(NodePtr node, double reward) {
-        while(root_->parent)
-        {
+        while (root_->parent) {
             root_->visits += 1;
             root_->value += reward;
+
+            // Check if the node should be pruned after update
+            if (shouldPruneNode(root_)) {
+                // If the node is pruned, remove it from its parent's children
+                if (root_->parent) {
+                    auto& siblings = root_->parent->children;
+                    siblings.erase(std::remove(siblings.begin(), siblings.end(), node), siblings.end());
+                }
+            }
+
             root_ = root_->parent;
         }
+    }
 
+    bool MCTSPolicy::shouldPruneNode(const NodePtr& node) const {
+        bool prune = node->visits >= MIN_VISITS_BEFORE_PRUNING &&
+               node->value / node->visits < NEGATIVE_REWARD_THRESHOLD;
+
+        if(prune)
+            printf("pruing node with visits = %d  values = %d \n", node->visits, node->value);
+
+        return prune;
     }
 
     double MCTSPolicy::simulate(const StatePtr &state, int maxSimSteps) {
@@ -211,22 +242,22 @@ namespace mcts {
 
     }
 
+    // Modify the bestChild function to consider pruning
     NodePtr MCTSPolicy::bestChild(NodePtr node, double explorationWeight) {
+        double bestValue = -std::numeric_limits<double>::infinity();
+        NodePtr bestChild = nullptr;
 
-        while (!node->children.empty()) {
-            double bestValue = -std::numeric_limits<double>::infinity();
-            NodePtr bestChild = nullptr;
-
-            for (const auto& child : node->children) {
+        for (const auto& child : node->children) {
+            if (!shouldPruneNode(child)) {
                 double uctValue = child->getUCT(explorationWeight);
                 if (uctValue > bestValue) {
                     bestValue = uctValue;
                     bestChild = child;
                 }
             }
-            node = bestChild;
         }
-        return node;
+
+        return bestChild ? bestChild : node;
     }
 
     NodePtr MCTSPolicy::search(int max_iterations) {

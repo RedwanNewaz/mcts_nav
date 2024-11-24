@@ -16,6 +16,10 @@
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
 namespace mcts {
+    // Add these constants to the class definition
+    const double NEGATIVE_REWARD_THRESHOLD = -5.0;
+    const int MIN_VISITS_BEFORE_PRUNING = 50;
+
     struct Node{
           StatePtr state;
           ActionPtr action;
@@ -78,7 +82,7 @@ namespace mcts {
 
     protected:
         double step(int epoch) override;
-
+        bool shouldPruneNode(const NodePtr& node) const;
         void save(const std::string &outfile) override;
 
     protected:
