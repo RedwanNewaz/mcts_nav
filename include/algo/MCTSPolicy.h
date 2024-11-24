@@ -4,15 +4,12 @@
 
 #ifndef MCTS_MCTSPOLICY_H
 #define MCTS_MCTSPOLICY_H
-#include <memory>
-#include "base/state.h"
-#include "base/action.h"
-#include "base/train.h"
-#include "base/env.h"
+
 #include "env/DynamicObstacles.h"
 #include <random>
 #include <future>
 #include <unordered_set>
+#include "MCTSNode.h"
 #define DEBUG(x) std::cout << "[MCTSPolicy]: " << x << std::endl
 
 namespace mcts {
@@ -20,46 +17,6 @@ namespace mcts {
     const double NEGATIVE_REWARD_THRESHOLD = -5;
     const int MIN_VISITS_BEFORE_PRUNING = 5;
 
-    struct Node{
-          StatePtr state;
-          ActionPtr action;
-          std::vector<std::shared_ptr<Node>> children;
-          std::shared_ptr<Node> parent;
-          int visits;
-          double value;
-          bool isTerminal;
-
-        Node(const StatePtr& s, const ActionPtr& a, std::shared_ptr<Node> p= nullptr)
-        :state(s), action(a), parent(p){
-            visits = 0;
-            value = 0.0;
-            isTerminal = false;
-        }
-
-        double getUCT(double c = 1.41) const {
-            if (visits == 0) return std::numeric_limits<double>::infinity();
-            return (value / visits) + c * std::sqrt(std::log(parent->visits) / visits);
-        }
-        [[nodiscard]] std::size_t hash() const {
-            std::size_t seed = state->hash();
-            std::size_t a = action->hash();
-            seed ^= std::hash<std::size_t>{}(a) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
-        }
-        std::size_t operator()(const Node& obj) const {
-            return obj.hash();
-        }
-
-        bool operator < (const Node& rhs) const {
-            return getUCT(0) < rhs.getUCT(0);
-        }
-
-        bool operator > (const Node& rhs) const {
-            return getUCT(0) > rhs.getUCT(0);
-        }
-    };
-    using NodePtr = std::shared_ptr<Node>;
     class MCTSPolicy : public base::train{
     public:
         MCTSPolicy(const EnvPtr &env, const std::vector<double>& u_range,
@@ -94,8 +51,6 @@ namespace mcts {
         StatePtr executeAction(const StatePtr& state, const ActionPtr& action);
         ActionPtr getUntriedAction(NodePtr node);
         bool shouldPruneNode(const NodePtr& node) const;
-
-
     };
 
 

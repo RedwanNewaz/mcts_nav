@@ -24,7 +24,8 @@ int main(int argc, char* argv[]) {
     std::vector<double> u_range{min_speed, max_speed, -max_yawrate, max_yawrate};
     std::vector<double> u_res{v_reso, yawrate_reso};
 
-    mcts::MCTSPolicy policy(env1, u_range, u_res, train_epoch);
+    std::string savePath = "../results/train001/policy.dat";
+    mcts::MCTSPolicy policy(env1, u_range, u_res, train_epoch,savePath);
     policy.run();
 
     auto strategy = policy.getPolicy();

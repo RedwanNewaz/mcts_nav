@@ -8,7 +8,8 @@
 #include <vector>
 #include <iterator>
 #include <cmath>
-
+#include <fstream>
+#include <ostream>
 namespace base{
     class State{
     public:
@@ -62,6 +63,27 @@ namespace base{
             auto dx = state_[0] - other.state_[0];
             auto dy = state_[1] - other.state_[1];
             return std::hypot(dx, dy);
+        }
+
+        void serialize(std::ofstream& out) {
+            // Write the size of the vector
+            size_t size = state_.size();
+            out.write(reinterpret_cast<const char*>(&size), sizeof(size));
+            // Write the vector elements
+            out.write(reinterpret_cast<const char*>(state_.data()), state_.size() * sizeof(double));
+            out.write(reinterpret_cast<const char*>(res_.data()), res_.size() * sizeof(double));
+        }
+
+        static std::vector<double> deserialize(std::ifstream& in) {
+            // Read the size of the vector
+            size_t size;
+            in.read(reinterpret_cast<char*>(&size), sizeof(size));
+            // Create and read the vector elements
+            // read for data and resolution
+            std::vector<double> vec(2 * size);
+            in.read(reinterpret_cast<char*>(vec.data()), size * sizeof(double));
+
+            return vec;
         }
     protected:
         std::size_t size_;

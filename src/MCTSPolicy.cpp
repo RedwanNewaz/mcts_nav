@@ -236,7 +236,12 @@ namespace mcts {
     }
 
     void MCTSPolicy::save(const std::string &outfile) {
-
+        std::ofstream out(outfile, std::ios::binary);
+        if (!out) {
+            throw std::runtime_error("Cannot open file for writing");
+        }
+        root_->serialize(out);
+        out.close();
     }
 
     NodePtr MCTSPolicy::bestChild(NodePtr node, double explorationWeight) {

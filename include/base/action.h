@@ -55,6 +55,28 @@ class Action{
             }
             return seed;
         }
+
+    void serialize(std::ofstream& out) {
+        // Write the size of the vector
+        size_t size = act_.size();
+        out.write(reinterpret_cast<const char*>(&size), sizeof(size));
+        // Write the vector elements
+        out.write(reinterpret_cast<const char*>(act_.data()), act_.size() * sizeof(double));
+        out.write(reinterpret_cast<const char*>(res_.data()), res_.size() * sizeof(double));
+
+    }
+
+    static std::vector<double> deserialize(std::ifstream& in) {
+        // Read the size of the vector
+        size_t size;
+        in.read(reinterpret_cast<char*>(&size), sizeof(size));
+        // Create and read the vector elements
+        // read for data and resolution
+        std::vector<double> vec(2 * size);
+        in.read(reinterpret_cast<char*>(vec.data()), size * sizeof(double));
+
+        return vec;
+    }
     protected:
         std::size_t size_;
         std::vector<double> res_;

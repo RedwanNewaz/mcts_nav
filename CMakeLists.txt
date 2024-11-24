@@ -29,6 +29,7 @@ set(SRC_FILES
         src/ObstacleGenerator.cpp
         include/env/DynamicObstacles.h
         include/utility/simulator.h
+        include/algo/MCTSNode.h
 )
 link_directories(/Users/redwan/miniconda3/envs/limbo/lib/)
 
